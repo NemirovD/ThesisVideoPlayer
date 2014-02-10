@@ -6,6 +6,7 @@ VidController::VidController(QObject *parent) :
     this->stop = true;
     this->quit = false;
     this->capture = new cv::VideoCapture;
+    this->draw_annotations = true;
 }
 
 VidController::~VidController()
