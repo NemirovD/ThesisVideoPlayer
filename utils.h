@@ -56,6 +56,46 @@ private:
     std::map<int,std::vector<ul::Annotation>> annotations;
 };
 
+class ObjectInfo
+{
+public:
+    ObjectInfo();
+    ObjectInfo(cv::Mat,cv::Rect,int,std::string,std::string = "");
+    ~ObjectInfo();
+    //getters
+    cv::Mat image();
+    cv::Rect location();
+    std::string name();
+    std::string description();
+    int frameNumber();
+private:
+    cv::Mat _image;
+    cv::Rect _location;
+    std::string _name;
+    std::string _description;
+    int _frameNumber;
+};
+
+class ObjectInfoLoader
+{
+public:
+    ObjectInfoLoader();
+    ObjectInfoLoader(std::string filename);
+    //getters
+    std::vector<ul::ObjectInfo> objectList();
+    //setters
+    void setObjectInfoFile(std::string filename);
+    //state checkers
+    bool isOpened();
+private:
+    //helper functions
+    void loadObjectInfo();
+    //member variables
+    bool _open;
+    std::string _file;
+    std::vector<ul::ObjectInfo> _objectList;
+};
+
 class FormatTime
 {
 public:

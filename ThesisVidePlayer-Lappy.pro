@@ -27,9 +27,9 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-win32: LIBS += -L$$PWD/../../../../../OpenCV/opencv/build/x86/vc10/lib/ -lopencv_core245
-win32: LIBS += -L$$PWD/../../../../../OpenCV/opencv/build/x86/vc10/lib/ -lopencv_highgui245
-win32: LIBS += -L$$PWD/../../../../../OpenCV/opencv/build/x86/vc10/lib/ -lopencv_imgproc245
+win32: LIBS += -L$$PWD/../../../../../../Android_Project/opencv/build/x86/vc10/lib/ -lopencv_core240
+win32: LIBS += -L$$PWD/../../../../../../Android_Project/opencv/build/x86/vc10/lib/ -lopencv_highgui240
+win32: LIBS += -L$$PWD/../../../../../../Android_Project/opencv/build/x86/vc10/lib/ -lopencv_imgproc240
 
-INCLUDEPATH += $$PWD/../../../../../OpenCV/opencv/build/include
-DEPENDPATH += $$PWD/../../../../../OpenCV/opencv/build/include
+INCLUDEPATH += $$PWD/../../../../../../Android_Project/opencv/build/include
+DEPENDPATH += $$PWD/../../../../../../Android_Project/opencv/build/include

@@ -45,6 +45,8 @@ private:
     //helper functions
     cv::Point labelSizeToImageSize(const QPoint&,const QSize&);
     QImage* processImage(cv::Mat frame);
+    void addAnnotationsToFrame();
+    //void addAnnotationToFrame(int frameNo, std::string name);
 
     bool quit;
     bool stop;

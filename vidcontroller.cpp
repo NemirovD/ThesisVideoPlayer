@@ -103,7 +103,8 @@ void VidController::run()
             }
             else
             {
-                //add annotation drawing later
+                if(draw_annotations)
+                    addAnnotationsToFrame();
                 img = processImage(frame);
             }
         }
@@ -150,4 +151,15 @@ QImage* VidController::processImage(cv::Mat frame)
                          QImage::Format_Indexed8);
     }
     return img;
+}
+
+void VidController::addAnnotationsToFrame()
+{
+    std::vector<ul::Annotation> rectsToDraw(annotationLoader.getFrameAnnotations(
+                                          getCurrentFrame()));
+
+    for(unsigned int i = 0; i < rectsToDraw.size(); ++i)
+    {
+        cv::rectangle(frame,rectsToDraw[i].getRect(),cv::Scalar::all(255),4);
+    }
 }

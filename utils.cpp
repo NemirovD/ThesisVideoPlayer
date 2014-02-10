@@ -257,4 +257,93 @@ bool AnnotationLoader::isAnnotationBeingDisplayed(Annotation an, std::vector<Ann
     }
     return false;
 }
+
+ObjectInfo::ObjectInfo()
+{
+    _image = cv::Mat();
+    _location = cv::Rect();
+    _name = "";
+    _description = "";
+    _frameNumber = 0;
+}
+
+ObjectInfo::ObjectInfo(cv::Mat image,
+                       cv::Rect location,
+                       int frameNumber,
+                       std::string name,
+                       std::string description)
+{
+    _image = image;
+    _location = location;
+    _frameNumber = frameNumber;
+    _name = name;
+    _description = description;
+}
+
+ObjectInfo::~ObjectInfo()
+{
+}
+
+cv::Mat ObjectInfo::image()
+{
+    return _image;
+}
+
+cv::Rect ObjectInfo::location()
+{
+    return _location;
+}
+
+std::string ObjectInfo::name()
+{
+    return _name;
+}
+
+std::string ObjectInfo::description()
+{
+    return _description;
+}
+
+int ObjectInfo::frameNumber()
+{
+    return _frameNumber;
+}
+
+ObjectInfoLoader::ObjectInfoLoader()
+{
+    _file = "";
+}
+
+ObjectInfoLoader::ObjectInfoLoader(std::string filename)
+{
+    _file = filename;
+    loadObjectInfo();
+}
+
+std::vector<ul::ObjectInfo> ObjectInfoLoader::objectList()
+{
+    return _objectList;
+}
+
+void ObjectInfoLoader::setObjectInfoFile(std::string filename)
+{
+    _file = filename;
+    loadObjectInfo();
+}
+
+bool ObjectInfoLoader::isOpened()
+{
+    return _open;
+}
+
+void ObjectInfoLoader::loadObjectInfo()
+{
+    cv::FileStorage fs(_file, cv::FileStorage::READ);
+    if(!fs.isOpened())
+    {
+        _open = false;
+    }
+    cv::FileNode n = fs["Objects"];
+    //TODO
+}
 }
