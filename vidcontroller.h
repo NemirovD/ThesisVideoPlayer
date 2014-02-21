@@ -19,7 +19,6 @@ public:
     bool loadVideo(std::string filename);
     void play();
     void stopVid();
-    void setCurrentFrame();
 
     //Video getters
     double getFrameRate() const;
@@ -27,7 +26,7 @@ public:
     double getNumberOfFrames() const;
 
     //Video setters
-    void VidController::setCurrentFrame( int frameNumber );
+    void setCurrentFrame( int frameNumber );
 
     //Video State Checkers
     bool isStopped() const;

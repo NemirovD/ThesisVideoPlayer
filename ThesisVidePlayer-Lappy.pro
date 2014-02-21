@@ -17,13 +17,15 @@ SOURCES += main.cpp\
     vidcontroller.cpp \
     vidlabel.cpp \
     utils.cpp \
-    objectlistmodel.cpp
+    objectlistmodel.cpp \
+    settingslabel.cpp
 
 HEADERS  += mainwindow.h \
     vidcontroller.h \
     vidlabel.h \
     utils.h \
-    objectlistmodel.h
+    objectlistmodel.h \
+    settingslabel.h
 
 FORMS    += mainwindow.ui
 

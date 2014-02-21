@@ -20,7 +20,7 @@ VidController::~VidController()
 
 void VidController::exit()
 {
-    this->quit = true;
+    quit = true;
 }
 
 void VidController::stopVid()
@@ -80,7 +80,7 @@ void VidController::setCurrentFrame( int frameNumber )
 
 bool VidController::isStopped() const
 {
-    return this->stop;
+    return stop;
 }
 
 bool VidController::isOpened() const
@@ -98,14 +98,14 @@ void VidController::run()
         if(!stop)
         {
             //Get the frame
-            if(!capture->read(this->frame))
+            if(!capture->read(frame))
             {
                 stop = true;
             }
             else
             {
-                if(draw_annotations)
-                    addAnnotationsToFrame();
+                //if(draw_annotations)
+                //   addAnnotationsToFrame();
                 img = processImage(frame);
             }
         }
@@ -161,6 +161,18 @@ void VidController::addAnnotationsToFrame()
 
     for(unsigned int i = 0; i < rectsToDraw.size(); ++i)
     {
-        cv::rectangle(frame,rectsToDraw[i].getRect(),cv::Scalar::all(255),4);
+        cv::Rect r = rectsToDraw[i].getRect();
+        cv::rectangle(frame,
+                      r,
+                      cv::Scalar::all(255),
+                      4);
+
+        cv::putText(frame,
+                    rectsToDraw[i].getName(),
+                    cv::Point(r.x,r.y-10),
+                    cv::FONT_HERSHEY_DUPLEX,
+                    2,
+                    cv::Scalar::all(255),
+                    4);
     }
 }

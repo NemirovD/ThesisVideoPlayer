@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include "vidcontroller.h"
+#include <QAction>
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -25,7 +26,6 @@ public slots:
     void onPlay();
     void updatePlayerUI(QImage img);
 
-    void trackBarSliderMoved(int position);
     void trackBarSliderPressed();
     void trackBarSliderReleased();
 private:
