@@ -1,75 +1,49 @@
 #include "utils.h"
-namespace ul{
-
-Annotation::Annotation()
+namespace ul
 {
-    this->name = "";
-    this->frameno = 0;
-    this->rect = cv::Rect();
-}
-
-Annotation::Annotation(std::string name, cv::Rect rect, int frameno)
+FormatTime::FormatTime()
 {
-    this->name = name;
-    this->frameno = frameno;
-    this->rect = rect;
-    this->webpage = "";
+    _currentTime = 0;
+    _totalTime = 0;
 }
 
-Annotation::Annotation(std::string name, std::string page, cv::Rect rect, int frameno)
+FormatTime::FormatTime(int cur, int total)
 {
-    this->name = name;
-    this->frameno = frameno;
-    this->rect = rect;
-    this->webpage = page;
+    _currentTime = cur;
+    _totalTime = total;
 }
 
-Annotation::~Annotation()
+std::string FormatTime::getFormattedTime()
 {
+    return convertTime(_currentTime)+" / "+convertTime(_totalTime);
 }
 
-bool Annotation::isEmpty()
+std::string FormatTime::getFormattedTime(int currentSeconds)
 {
-    if(this->name.empty())
-    {
-        return true;
-    }
-    return false;
+    currentTime(currentSeconds);
+    return getFormattedTime();
 }
 
-cv::FileStorage& operator<<(cv::FileStorage& fs, const Annotation ann)
+void FormatTime::totalTime(int totalSeconds)
 {
-    fs << "name" << ann.name;
-    fs << "webpage" << ann.webpage;
-    fs << "frameno" << ann.frameno;
-    fs << "rect" << ann.rect;
-
-    return fs;
+    _totalTime = totalSeconds;
 }
 
-std::ostream& operator<<(std::ostream& os, const Annotation ann)
+void FormatTime::currentTime(int currentSeconds)
 {
-    os << ann.name << std::endl;
-    os << ann.webpage << std::endl;
-    os << ann.frameno << std::endl;
-    os << ann.rect.x << " " << ann.rect.y << " " << ann.rect.width << " " << ann.rect.height << std::endl;
-    return os;
+    _currentTime = currentSeconds;
 }
 
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
+std::string FormatTime::convertTime(int timeInSeconds)
+{
+    int seconds = (int) (timeInSeconds) % 60 ;
+    int minutes = (int) ((timeInSeconds / 60) % 60);
+    int hours   = (int) ((timeInSeconds / (60*60)) % 24);
+    QTime t(hours, minutes, seconds);
+    if (hours == 0 )
+      return t.toString("mm:ss").toStdString();
+    else
+      return t.toString("h:mm:ss").toStdString();
 }
 
 std::string getFileNameWithoutExtension(std::string filename)
@@ -90,167 +64,209 @@ std::string getFileNameWithoutExtension(std::string filename)
     return toBeReturned;
 }
 
-void MapToVec(const std::map<int,std::vector<ul::Annotation>>& m, std::vector<ul::Annotation>& v)
+ObjectInfo::ObjectInfo()
 {
-    for(std::map<int,std::vector<ul::Annotation>>::const_iterator it = m.begin(); it!=m.end(); ++it)
+    _icon = cv::Mat();
+    _name = "";
+    _URL = "";
+    //the frame number can never
+    //naturally be less than zero
+    _frameNumber = -1;
+    _location = cv::Rect();
+}
+
+ObjectInfo::ObjectInfo(cv::Mat icon,
+                       std::string name,
+                       std::string URL,
+                       int frameNumber,
+                       cv::Rect location)
+{
+    _icon = icon;
+    _name = name;
+    _URL = URL;
+    _frameNumber = frameNumber;
+    _location = location;
+}
+
+ObjectInfo::~ObjectInfo()
+{}
+
+cv::Mat ObjectInfo::icon() const
+{return _icon;}
+
+std::string ObjectInfo::name() const
+{return _name;}
+
+std::string ObjectInfo::URL() const
+{return _URL;}
+
+int ObjectInfo::frameNumber() const
+{return _frameNumber;}
+
+cv::Rect ObjectInfo::location() const
+{return _location;}
+
+void ObjectInfo::icon(cv::Mat i)
+{_icon = i;}
+
+void ObjectInfo::name(std::string n)
+{_name = n;}
+
+void ObjectInfo::URL(std::string u)
+{_URL = u;}
+
+void ObjectInfo::frameNumber(int f)
+{_frameNumber = f;}
+
+void ObjectInfo::location(cv::Rect l)
+{_location = l;}
+
+cv::FileStorage& operator << (cv::FileStorage& fs, const ObjectInfo oi)
+{
+    fs << "name" << oi._name;
+    fs << "icon" << oi._icon;
+    fs << "URL" << oi._URL;
+    fs << "frameNumber" << oi._frameNumber;
+    fs << "location" << oi._location;
+
+    return fs;
+}
+
+cv::FileNode& operator >> (cv::FileNode& fn, ObjectInfo& oi)
+{
+    cv::Mat ico;
+    fn["icon"] >> ico;
+    oi.icon(ico);
+    oi.name((std::string)fn["name"]);
+
+    oi.URL((std::string)fn["URL"]);
+
+    oi.frameNumber((int)fn["frameNumber"]);
+
+    std::vector<int> r;
+    fn["location"] >> r;
+    cv::Rect rl(r[0],r[1],r[2],r[3]);
+    oi.location(rl);
+
+    return fn;
+}
+
+ObjectInfoHandler::ObjectInfoHandler()
+{
+    _filename = "";
+    _open = false;
+}
+
+ObjectInfoHandler::ObjectInfoHandler(std::string filename)
+{
+    loadObjectsFromFile(filename);
+}
+
+QVector<ObjectInfo> ObjectInfoHandler::objectList() const
+{return _objectList;}
+
+bool ObjectInfoHandler::isOpened() const
+{return _open;}
+
+void ObjectInfoHandler::loadObjectsFromFile(std::string filename)
+{
+    _filename = filename;
+    loadObjectInfo();
+}
+
+void ObjectInfoHandler::addObject(ObjectInfo oi)
+{
+    _objectList.push_back(oi);
+}
+
+void ObjectInfoHandler::editObject(int index, ObjectInfo oi)
+{
+    _objectList[index] = oi;
+}
+
+void ObjectInfoHandler::writeObjectsToFile()
+{writeObjectsToFile(_filename);}
+
+void ObjectInfoHandler::writeObjectsToFile(std::string filename)
+{
+    cv::FileStorage fs(filename,cv::FileStorage::WRITE);
+    fs << "Objects" << "{";
+    for(int i = 0; i < _objectList.size(); ++i)
     {
-        for(std::vector<ul::Annotation>::const_iterator ij = it->second.begin(); ij!=(it->second).end(); ++ij)
+        //setup arbitrary ID
+        std::stringstream ss;
+        ss << "object" << i;
+
+        //write ID to file storage
+        std::string ID = ss.str();
+        fs << ID << "{";
+
+        //write objectinfo
+        fs << _objectList[i];
+        fs << "}";
+    }
+    fs << "}";
+    fs.release();
+}
+
+QVector<ObjectInfo> ObjectInfoHandler::getObjectsIn(int frameNumber)
+{
+    int lower = frameNumber - 30;
+    lower = lower < 0 ? 0 : lower;
+
+    int upper = frameNumber + 30;
+
+    QVector<ObjectInfo> objectsInFrame;
+
+    for(int i = 0; i < _objectList.size(); ++i)
+    {
+        if(_objectList[i].frameNumber()==frameNumber)
         {
-            v.push_back(*ij);
+            objectsInFrame.push_back(_objectList[i]);
         }
     }
-    return;
-}
 
-FormatTime::FormatTime()
-{
-    this->currentTime = 0;
-    this->totalTime = 0;
-}
-
-FormatTime::FormatTime(int cur, int total)
-{
-    this->currentTime = cur;
-    this->totalTime = total;
-}
-
-std::string FormatTime::getFormatTime()
-{
-    return convertTime(currentTime)+" / "+convertTime(totalTime);
-}
-
-void FormatTime::setTotalTime(int totalSeconds)
-{
-    this->totalTime = totalSeconds;
-}
-
-void FormatTime::setCurrentTime(int currentSeconds)
-{
-    this->currentTime = currentSeconds;
-}
-
-std::string FormatTime::getFormatTime(int currentSeconds)
-{
-    this->setCurrentTime(currentSeconds);
-    return this->getFormatTime();
-}
-
-std::string FormatTime::convertTime(int timeInSeconds)
-{
-    int seconds = (int) (timeInSeconds) % 60 ;
-    int minutes = (int) ((timeInSeconds / 60) % 60);
-    int hours   = (int) ((timeInSeconds / (60*60)) % 24);
-    QTime t(hours, minutes, seconds);
-    if (hours == 0 )
-      return t.toString("mm:ss").toStdString();
-    else
-      return t.toString("h:mm:ss").toStdString();
-}
-
-AnnotationLoader::AnnotationLoader()
-{
-    currentFile = "";
-}
-
-AnnotationLoader::AnnotationLoader(std::string filename)
-{
-    setAnnotationFile(filename);
-}
-
-std::vector<ul::Annotation> AnnotationLoader::getFrameAnnotations(int frameNumber)
-{
-    int start = frameNumber - 30;
-    if(start < 0)
-        start = 0;
-
-    int end = frameNumber + 30;
-
-    std::vector<ul::Annotation> rectsToDraw;
-    if(annotations.count(frameNumber))
+    for(int i = 0; i < _objectList.size(); ++i)
     {
-        std::vector<ul::Annotation> v = this->annotations[frameNumber];
-        for(unsigned int i = 0; i < v.size(); ++i)
-        {
-            rectsToDraw.push_back(v[i]);
-        }
-    }
-
-    for(int i = frameNumber; i < end; ++i)
-    {
-        if(annotations.count(i))
-        {
-            std::vector<ul::Annotation> v = annotations[i];
-            for(unsigned int j = 0; j < v.size(); ++j)
+        if(lower < _objectList[i].frameNumber() &&
+                _objectList[i].frameNumber() < upper){
+            if(!isObjectInList(objectsInFrame,_objectList[i]))
             {
-                if(!isAnnotationBeingDisplayed(v[j],rectsToDraw))
-                {
-                    rectsToDraw.push_back(v[j]);
-                }
+                objectsInFrame.push_back(_objectList[i]);
             }
         }
     }
-
-    for(int i = frameNumber; i > start; --i)
-    {
-        if(annotations.count(i))
-        {
-            std::vector<ul::Annotation> v = annotations[i];
-            for(unsigned int j = 0; j < v.size(); ++j)
-            {
-                if(!isAnnotationBeingDisplayed(v[j],rectsToDraw))
-                {
-                    rectsToDraw.push_back(v[j]);
-                }
-            }
-        }
-    }
-    return rectsToDraw;
+    return objectsInFrame;
 }
 
-void AnnotationLoader::setAnnotationFile(std::string filename)
+void ObjectInfoHandler::loadObjectInfo()
 {
-    cv::FileStorage fs(filename, cv::FileStorage::READ);
+    cv::FileStorage fs(_filename, cv::FileStorage::READ);
     if(!fs.isOpened())
     {
-        open = false;
+        _open = false;
+        return;
     }
-    cv::FileNode n = fs["Annotations"];
-    std::map<int,std::vector<ul::Annotation>> toSet;
-
-    cv::FileNodeIterator it = n.begin(), it_end = n.end();
-    for(; it!= it_end; ++it)
+    QVector<ObjectInfo> toReturn;
+    cv::FileNode objects = fs["Objects"];
+    cv::FileNodeIterator it = objects.begin(), end = objects.end();
+    for(; it!= end; ++it)
     {
-        cv::FileNode ni = n[((cv::FileNode)*it).name()];
+        cv::FileNode node = objects[((cv::FileNode)*it).name()];
 
-        cv::Rect r;
-        cv::FileNode rn = ni["rect"];
-        cv::FileNodeIterator rni = rn.begin();
-
-
-        r.x = *rni;
-        r.y = *(++rni);
-        r.width = *(++rni);
-        r.height = *(++rni);
-
-        ul::Annotation ret((std::string)ni["name"],
-                           (std::string)ni["webpage"],
-                           r,
-                           (int)ni["frameno"]);
-        toSet[(int)ni["frameno"]].push_back(ret);
+        ObjectInfo t;
+        node >> t;
+        toReturn.push_back(t);
     }
-    annotations = toSet;
+    _objectList = toReturn;
+    _open = true;
 }
 
-bool AnnotationLoader::isOpened() const
+bool ObjectInfoHandler::isObjectInList(QVector<ObjectInfo> list, ObjectInfo ob)
 {
-    return open;
-}
-
-bool AnnotationLoader::isAnnotationBeingDisplayed(Annotation an, std::vector<Annotation> v)
-{
-    for(unsigned int i = 0; i < v.size(); ++i)
+    for(int i = 0; i < list.size(); ++i)
     {
-        if(an.getName().compare(v[i].getName())==0)
+        if(list[i].name() == ob.name())
         {
             return true;
         }
@@ -258,92 +274,20 @@ bool AnnotationLoader::isAnnotationBeingDisplayed(Annotation an, std::vector<Ann
     return false;
 }
 
-ObjectInfo::ObjectInfo()
+std::vector<std::string> split(const std::string &s, char delim)
 {
-    _image = cv::Mat();
-    _location = cv::Rect();
-    _name = "";
-    _description = "";
-    _frameNumber = 0;
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
 }
 
-ObjectInfo::ObjectInfo(cv::Mat image,
-                       cv::Rect location,
-                       int frameNumber,
-                       std::string name,
-                       std::string description)
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {
-    _image = image;
-    _location = location;
-    _frameNumber = frameNumber;
-    _name = name;
-    _description = description;
-}
-
-ObjectInfo::~ObjectInfo()
-{
-}
-
-cv::Mat ObjectInfo::image()
-{
-    return _image;
-}
-
-cv::Rect ObjectInfo::location()
-{
-    return _location;
-}
-
-std::string ObjectInfo::name()
-{
-    return _name;
-}
-
-std::string ObjectInfo::description()
-{
-    return _description;
-}
-
-int ObjectInfo::frameNumber()
-{
-    return _frameNumber;
-}
-
-ObjectInfoLoader::ObjectInfoLoader()
-{
-    _file = "";
-}
-
-ObjectInfoLoader::ObjectInfoLoader(std::string filename)
-{
-    _file = filename;
-    loadObjectInfo();
-}
-
-std::vector<ul::ObjectInfo> ObjectInfoLoader::objectList()
-{
-    return _objectList;
-}
-
-void ObjectInfoLoader::setObjectInfoFile(std::string filename)
-{
-    _file = filename;
-    loadObjectInfo();
-}
-
-bool ObjectInfoLoader::isOpened()
-{
-    return _open;
-}
-
-void ObjectInfoLoader::loadObjectInfo()
-{
-    cv::FileStorage fs(_file, cv::FileStorage::READ);
-    if(!fs.isOpened())
-    {
-        _open = false;
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
     }
-    cv::FileNode n = fs["Objects"];
-    //TODO
+    return elems;
 }
 }

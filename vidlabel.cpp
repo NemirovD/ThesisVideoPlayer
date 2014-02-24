@@ -6,7 +6,7 @@ VidLabel::VidLabel(QWidget *parent) :
 }
 
 void VidLabel::mouseMoveEvent(QMouseEvent *ev)
-{
+{ 
     const QPoint p = ev->pos();
     if(ev->buttons() == Qt::LeftButton)
     {

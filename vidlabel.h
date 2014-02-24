@@ -1,6 +1,7 @@
 #ifndef VIDLABEL_H
 #define VIDLABEL_H
 
+#include <iostream>
 #include <QMouseEvent>
 #include <QPoint>
 #include <QLabel>

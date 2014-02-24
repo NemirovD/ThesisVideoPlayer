@@ -1,101 +1,16 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <map>
 #include <QTime>
+#include <QVector>
+#include <QImage>
 #include <opencv2/opencv.hpp>
-#include <iostream>
 
-namespace ul{
-
-class Annotation
-{
-public:
-    Annotation();
-    Annotation(std::string,cv::Rect,int);
-    Annotation(std::string,std::string,cv::Rect,int);
-    ~Annotation();
-    bool isEmpty();
-    friend cv::FileStorage& operator<<(cv::FileStorage& fs, const Annotation ann);
-    friend std::ostream& operator<<(std::ostream& os, const Annotation ann);
-
-    //getters and setters
-    std::string getName(){return name;}
-    std::string getWebpage(){return webpage;}
-    cv::Rect getRect(){return rect;}
-    int getFrameNo(){return frameno;}
-    void setName(std::string name){this->name = name;}
-    void setWebpage(std::string page){this->webpage = page;}
-    void setRect(cv::Rect rect){this->rect = rect;}
-    void setFrameNo(int frame){this->frameno=frame;}
-private:
-    std::string name;
-    std::string webpage;
-    cv::Rect rect;
-    int frameno;
-};
-
-class AnnotationLoader
-{
-public:
-    AnnotationLoader();
-    AnnotationLoader(std::string filename);
-
-    //getters
-    std::vector<ul::Annotation> getFrameAnnotations(int frameNumber);
-
-    //setters
-    void setAnnotationFile(std::string filename);
-
-    //state checkers
-    bool isOpened() const;
-private:
-    bool open;
-    bool isAnnotationBeingDisplayed(ul::Annotation an,std::vector<ul::Annotation> v);
-    std::string currentFile;
-    std::map<int,std::vector<ul::Annotation>> annotations;
-};
-
-class ObjectInfo
-{
-public:
-    ObjectInfo();
-    ObjectInfo(cv::Mat,cv::Rect,int,std::string,std::string = "");
-    ~ObjectInfo();
-    //getters
-    cv::Mat image();
-    cv::Rect location();
-    std::string name();
-    std::string description();
-    int frameNumber();
-private:
-    cv::Mat _image;
-    cv::Rect _location;
-    std::string _name;
-    std::string _description;
-    int _frameNumber;
-};
-
-class ObjectInfoLoader
-{
-public:
-    ObjectInfoLoader();
-    ObjectInfoLoader(std::string filename);
-    //getters
-    std::vector<ul::ObjectInfo> objectList();
-    //setters
-    void setObjectInfoFile(std::string filename);
-    //state checkers
-    bool isOpened();
-private:
-    //helper functions
-    void loadObjectInfo();
-    //member variables
-    bool _open;
-    std::string _file;
-    std::vector<ul::ObjectInfo> _objectList;
-};
-
+namespace ul {
+//used to format the time of the labels
+//interface is fatter than it needs to be
+//but I thought the extra getters/setters
+//would be useful
 class FormatTime
 {
 public:
@@ -103,29 +18,90 @@ public:
     FormatTime(int cur, int total);
 
     //getters
-    std::string getFormatTime();
+    std::string getFormattedTime();
+    std::string getFormattedTime(int currentSeconds);
 
     //setters
-    void setTotalTime(int totalSeconds);
-    void setCurrentTime(int currentSeconds);
-
-    //updaters
-    std::string getFormatTime(int currentSeconds);
+    void totalTime(int totalSeconds);
+    void currentTime(int currentSeconds);
 private:
-    int currentTime;
-    int totalTime;
+    //helper functions
     std::string convertTime(int seconds);
+
+    int _currentTime;
+    int _totalTime;
 };
 
-struct TrackerEditInfo{
-    bool trackNoIsValid;
-    int trackerno;
-    int x_0;
-    int y_0;
-    bool mouseDown;
+class ObjectInfo
+{
+public:
+    ObjectInfo();
+    ObjectInfo(cv::Mat icon,
+               std::string name,
+               std::string URL,
+               int frameNumber,
+               cv::Rect location);
+    ~ObjectInfo();
+
+    //getters
+    cv::Mat icon() const;
+    std::string name() const;
+    std::string URL() const;
+    int frameNumber() const;
+    cv::Rect location() const;
+
+    //setters
+    void icon(cv::Mat);
+    void name(std::string);
+    void URL(std::string);
+    void frameNumber(int);
+    void location(cv::Rect);
+
+    //stream operators
+    friend cv::FileStorage& operator << (cv::FileStorage& fs, const ObjectInfo oi);
+    friend cv::FileNode& operator >> (cv::FileNode& fn, ObjectInfo& oi);
+private:
+
+    cv::Mat _icon;
+    std::string _name;
+    std::string _URL;
+    int _frameNumber;
+    cv::Rect _location;
 };
 
-void MapToVec(const std::map<int,std::vector<ul::Annotation>>& m, std::vector<ul::Annotation>& v);
+
+class ObjectInfoHandler
+{
+public:
+    ObjectInfoHandler();
+    ObjectInfoHandler(std::string filename);
+
+    //getters
+    QVector<ObjectInfo> objectList() const;
+
+    //state checkers
+    bool isOpened() const;
+
+    //modifiers
+    void addObject(ObjectInfo);
+    void editObject(int index, ObjectInfo oi);
+
+    //IO
+    void loadObjectsFromFile(std::string filename);
+    void writeObjectsToFile();
+    void writeObjectsToFile(std::string filename);
+
+    //Misc
+    QVector<ObjectInfo> getObjectsIn(int frameNumber);
+private:
+    void loadObjectInfo();
+    bool isObjectInList(QVector<ObjectInfo>,ObjectInfo);
+
+    bool _open;
+    std::string _filename;
+    QVector<ObjectInfo> _objectList;
+};
+
 std::string getFileNameWithoutExtension(std::string filename);
 std::vector<std::string> split(const std::string &s, char delim);
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);

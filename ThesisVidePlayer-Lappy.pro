@@ -17,17 +17,26 @@ SOURCES += main.cpp\
     vidcontroller.cpp \
     vidlabel.cpp \
     utils.cpp \
-    objectlistmodel.cpp \
-    settingslabel.cpp
+    rectdrawer.cpp \
+    objectlistwidget.cpp \
+    objectinfolistwidget.cpp \
+    editobjectdialog.cpp \
+    addobjectdialog.cpp
 
 HEADERS  += mainwindow.h \
     vidcontroller.h \
     vidlabel.h \
     utils.h \
-    objectlistmodel.h \
-    settingslabel.h
+    rectdrawer.h \
+    objectlistwidget.h \
+    objectinfolistwidget.h \
+    editobjectdialog.h \
+    addobjectdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    objectinfolistwidget.ui \
+    editobjectdialog.ui \
+    addobjectdialog.ui
 
 win32: LIBS += -L$$PWD/../../../../../../Android_Project/opencv/build/x86/vc10/lib/ -lopencv_core240
 win32: LIBS += -L$$PWD/../../../../../../Android_Project/opencv/build/x86/vc10/lib/ -lopencv_highgui240

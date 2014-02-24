@@ -6,24 +6,36 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>403</width>
-    <height>326</height>
+    <width>965</width>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="mainLayout">
       <item>
-       <widget class="QLabel" name="vidLabel">
+       <widget class="VidLabel" name="vidLabel">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>768</width>
+          <height>432</height>
+         </size>
         </property>
         <property name="text">
          <string/>
@@ -32,21 +44,20 @@
       </item>
       <item>
        <widget class="QSlider" name="trackBarSlider">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QPushButton" name="playpauseButton">
           <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../drawables/sem_labs_icon_pack/icons/control_right.png</normaloff>../drawables/sem_labs_icon_pack/icons/control_right.png</iconset>
+           <string>Play</string>
           </property>
          </widget>
         </item>
@@ -71,23 +82,29 @@
          </spacer>
         </item>
         <item>
-         <widget class="QLabel" name="buyLabel">
+         <widget class="QPushButton" name="BuyButton">
           <property name="text">
-           <string>Buy</string>
+           <string>Buy Product</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="annotationButton">
+         <widget class="QPushButton" name="showObjectsButton">
           <property name="text">
-           <string>Annotation Button</string>
+           <string>Show Products</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="settingsLabel">
+         <widget class="QPushButton" name="showSideBarButton">
           <property name="text">
-           <string>Shows Sidebar</string>
+           <string>Show Sidebar</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -96,24 +113,95 @@
      </layout>
     </item>
     <item>
-     <widget class="QGroupBox" name="sideBar">
-      <property name="enabled">
-       <bool>true</bool>
+     <widget class="QWidget" name="objectSideBar" native="true">
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>16777215</height>
+       </size>
       </property>
-      <property name="flat">
-       <bool>true</bool>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QListView" name="listView"/>
+        <widget class="ObjectListWidget" name="objectList"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="createObjectButton">
+         <property name="text">
+          <string>Create Object</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="moveRectButton">
+           <property name="text">
+            <string>Move Rect</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="editObjectButton">
+           <property name="text">
+            <string>Edit Object</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
     </item>
    </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>965</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave_Objects"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionSave_Objects">
+   <property name="text">
+    <string>Save Objects</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>VidLabel</class>
+   <extends>QLabel</extends>
+   <header>vidlabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ObjectListWidget</class>
+   <extends>QListWidget</extends>
+   <header>objectlistwidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -123,12 +211,28 @@
    <slot>onPlay()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>29</x>
-     <y>298</y>
+     <x>48</x>
+     <y>560</y>
     </hint>
     <hint type="destinationlabel">
-     <x>201</x>
-     <y>162</y>
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>showSideBarButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>objectSideBar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>440</x>
+     <y>560</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>720</x>
+     <y>301</y>
     </hint>
    </hints>
   </connection>
@@ -139,12 +243,12 @@
    <slot>trackBarSliderPressed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>201</x>
-     <y>266</y>
+     <x>354</x>
+     <y>532</y>
     </hint>
     <hint type="destinationlabel">
-     <x>201</x>
-     <y>162</y>
+     <x>482</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -155,20 +259,104 @@
    <slot>trackBarSliderReleased()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>201</x>
-     <y>266</y>
+     <x>354</x>
+     <y>532</y>
     </hint>
     <hint type="destinationlabel">
-     <x>201</x>
-     <y>162</y>
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>createObjectButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setMouseCallbackAddObject(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>830</x>
+     <y>522</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>moveRectButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setMouseCallbackMoveRect(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>752</x>
+     <y>552</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>objectList</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>onItemDoubleClick(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>830</x>
+     <y>271</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>showObjectsButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>showObjects(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>577</x>
+     <y>560</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>editObjectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>showEditObjectDialog()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>889</x>
+     <y>552</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <slots>
   <slot>onPlay()</slot>
-  <slot>trackBarSliderMoved(int)</slot>
   <slot>trackBarSliderPressed()</slot>
   <slot>trackBarSliderReleased()</slot>
+  <slot>setMouseCallbackAddObject(bool)</slot>
+  <slot>setMouseCallbackMoveRect(bool)</slot>
+  <slot>showEditObjectDialog()</slot>
+  <slot>onItemDoubleClick(QModelIndex)</slot>
+  <slot>showObjects(bool)</slot>
  </slots>
 </ui>

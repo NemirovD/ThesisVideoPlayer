@@ -5,24 +5,68 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    //DO NOT DELETE THE NEXT LINE
-    ui->setupUi(this); // if deleted there will be no UI and
-    //everything will not be good
-
+    ui->setupUi(this);
+    ui->objectSideBar->setVisible(false);
+    ui->moveRectButton->setVisible(false);
+    ui->editObjectButton->setVisible(false);
+    ui->createObjectButton->setVisible(false);
 
     vidController = new VidController(this);
+
+    editObjectDialog = new EditObjectDialog(this);
+
+    //oh my god this list is getting tedious...
+    //I wish there was a better way
     connect(vidController,
             SIGNAL(processedImage(QImage)),
             this,
             SLOT(updatePlayerUI(QImage)));
 
-    //there doesn't seem to be a way to change visibility
-    //in the UI editor so it has to be done here
-    ui->sideBar->setVisible(false);
+    //Mouse connections
+    connect(ui->vidLabel,
+            SIGNAL(mousePressed(const QPoint&, const QSize&)),
+            vidController,
+            SLOT(mouseDown(const QPoint&,const QSize&)));
+
+    connect(ui->vidLabel,
+            SIGNAL(mouseMoved(const QPoint&, const QSize&)),
+            vidController,
+            SLOT(mouseMove(const QPoint&,const QSize&)));
+
+    connect(ui->vidLabel,
+            SIGNAL(mouseReleased(const QPoint&, const QSize&)),
+            vidController,
+            SLOT(mouseUp(const QPoint&,const QSize&)));
+
+    //updateing list
+    qRegisterMetaType<QVector<ul::ObjectInfo>>("QVector<ul::ObjectInfo>");
+    connect(vidController,
+            SIGNAL(objectListChanged(const QVector<ul::ObjectInfo>)),
+            ui->objectList,
+            SLOT(updateObjectList(const QVector<ul::ObjectInfo>)));
+
+    connect(ui->objectList,
+            SIGNAL(currentRowChanged(int)),
+            editObjectDialog,
+            SLOT(activeObject(int)));
+
+    connect(vidController,
+            SIGNAL(objectListChanged(const QVector<ul::ObjectInfo>)),
+            editObjectDialog,
+            SLOT(updateObjectList(const QVector<ul::ObjectInfo>)));
+
+    connect(editObjectDialog,
+            SIGNAL(updatedObjectInfo(int,ul::ObjectInfo)),
+            vidController,
+            SLOT(editObject(int,ul::ObjectInfo)));
+
+    connect(vidController,
+            SIGNAL(videoEnded()),
+            this,
+            SLOT(onVidEnding()));
 }
+
 MainWindow::~MainWindow()
-//when mainwindow tries to be deconstructed it will tell
-//vidController to stop what it's doing and then quit.
 {
     vidController->exit();
     vidController->wait();
@@ -31,9 +75,6 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::openVid()
-//the following code opens a file and then tells the videocontroller
-//to prepare it for viewing. You should be able to understand what's
-//going on by the function names.
 {
     QString filename = QFileDialog::getOpenFileName(this,
                                                     tr("Open Video"), ".",
@@ -51,7 +92,7 @@ void MainWindow::openVid()
         else
         {
 
-            curFileName = ul::getFileNameWithoutExtension(filename.toStdString());
+            currentFileName = ul::getFileNameWithoutExtension(filename.toStdString());
             ui->trackBarSlider->setEnabled(true);
             this->setWindowTitle(name.fileName());
             ui->trackBarSlider->setMaximum(vidController->getNumberOfFrames());
@@ -61,31 +102,25 @@ void MainWindow::openVid()
             int totalSecs = (int)vidController->getNumberOfFrames()/
                     (int)vidController->getFrameRate();
 
-            formatTime.setTotalTime(totalSecs);
-            ui->timeLabel->setText(tr(formatTime.getFormatTime().c_str()));
+            formatTime.totalTime(totalSecs);
+            ui->timeLabel->setText(tr(formatTime.getFormattedTime().c_str()));
         }
     }
 }
 
 void MainWindow::onPlay()
 {
-    //plays or pauses the video
-    //if there is no video open
-    //open the file dialog so that
-    //you can.
-    //Just realised that there's no
-    //error checking to see if the chosen
-    //file is actually a video
-    //I wonder what would happen.
     if(vidController->isOpened())
     {
         if(vidController->isStopped())
         {
             vidController->play();
+            ui->playpauseButton->setText("Pause");
         }
         else
         {
             vidController->stopVid();
+            ui->playpauseButton->setText("Play");
         }
     }
     else
@@ -98,22 +133,10 @@ void MainWindow::updatePlayerUI(QImage img)
 {
     if(!img.isNull())
     {
-        //This portion of the code shows takes the QImage provided
-        //and applies it to the VidLabel, I don't remember what the
-        //setAlignment portion of the code is for but I'm sure if
-        //you removed it you'd understand
         ui->vidLabel->setAlignment(Qt::AlignCenter);
         ui->vidLabel->setPixmap(QPixmap::fromImage(img).scaled(ui->vidLabel->size(),
                                                                 Qt::KeepAspectRatio,
                                                                 Qt::FastTransformation));
-
-        //This next block only updates the trackBar if the
-        //video is currently playing
-        //this is so that you can move the trackBar easily
-        //without the slider jumping back to the old position
-        //A Better version of this code is to
-        //have a boolean that sees if the trackBar isPressed
-        //that might already exist I dunno
         if(!vidController->isStopped()){
             ui->trackBarSlider->setValue(vidController->getCurrentFrame());
             this->updateLabelTime();
@@ -122,17 +145,11 @@ void MainWindow::updatePlayerUI(QImage img)
 }
 
 void MainWindow::trackBarSliderPressed()
-//pretty obvious what happens here
 {
     vidController->stopVid();
 }
 
 void MainWindow::trackBarSliderReleased()
-//should also be obvious what happens here
-//OH if it's not totally clear the trackBarSlider->value()
-//gets a number that's between 0 and the total number of frames
-//because we set the max val for the trackBar to be the last frame
-//of the video in the openVid function
 {
     vidController->setCurrentFrame(ui->trackBarSlider->value());
     this->updateLabelTime();
@@ -140,10 +157,67 @@ void MainWindow::trackBarSliderReleased()
     vidController->play();
 }
 
-void MainWindow::updateLabelTime()
-//should be obvious what's happening here by the
-//function name
+void MainWindow::setMouseCallbackAddObject(bool toggled)
 {
-    ui->timeLabel->setText(tr(formatTime.getFormatTime((int)vidController->getCurrentFrame()
+    if(toggled)
+    {
+        vidController->setMouseCallbackMode(VidController::MODE_ADD_OBJECT);
+        if(ui->moveRectButton->isChecked())
+        {
+            bool oldstate = ui->moveRectButton->blockSignals(true);
+            ui->moveRectButton->setChecked(false);
+            ui->moveRectButton->blockSignals(oldstate);
+        }
+    }
+    else
+    {
+        vidController->setMouseCallbackMode(VidController::MODE_NONE);
+    }
+}
+
+void MainWindow::setMouseCallbackMoveRect(bool toggled)
+{
+    if(toggled)
+    {
+        vidController->setMouseCallbackMode(VidController::MODE_MOVE_RECT);
+        if(ui->createObjectButton->isChecked())
+        {
+            bool oldstate = ui->createObjectButton->blockSignals(true);
+            ui->createObjectButton->setChecked(false);
+            ui->createObjectButton->blockSignals(oldstate);
+        }
+    }
+    else
+    {
+        vidController->setMouseCallbackMode(VidController::MODE_NONE);
+    }
+}
+
+void MainWindow::showEditObjectDialog()
+{
+    if(!(editObjectDialog->objectIndex() < 0))
+    {
+        editObjectDialog->exec();
+    }
+}
+
+void MainWindow::onItemDoubleClick(QModelIndex mi)
+{
+    vidController->showObject(mi.row());
+}
+
+void MainWindow::showObjects(bool toggled)
+{
+    vidController->showObjects(toggled);
+}
+
+void MainWindow::onVidEnding()
+{
+    ui->objectSideBar->setVisible(true);
+}
+
+void MainWindow::updateLabelTime()
+{
+    ui->timeLabel->setText(tr(formatTime.getFormattedTime((int)vidController->getCurrentFrame()
                                                    /(int)vidController->getFrameRate()).c_str()));
 }
